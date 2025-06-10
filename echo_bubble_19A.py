@@ -215,9 +215,11 @@ def plot_financial_cascade(df):
 
     for ax_row in axes:
         for ax_col in ax_row:
-            ax_col.set_xlabel('Week', fontsize=16)
+            if ax_col is not axes[1, 1]:
+                ax_col.set_xlabel('Week', fontsize=16)
             ax_col.tick_params(axis='both', which='major', labelsize=14)
 
+    
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig("financial_bubble_dashboard.png", dpi=300, bbox_inches='tight')
     plt.show()
