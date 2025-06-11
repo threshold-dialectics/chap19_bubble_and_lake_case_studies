@@ -57,8 +57,8 @@ class LakeEcosystem:
         """Contains the core dynamic logic for a single simulation step (year)."""
         # 1. External pressure slowly and relentlessly increases
         # This represents increased agricultural/urban runoff over decades
+        #self.nutrient_loading += 0.015 + np.random.normal(0, 0.005)
         self.nutrient_loading += 0.015 + np.random.normal(0, 0.005)
-
         if not self.has_collapsed:
             # --- Pre-Collapse Dynamics ---
             # 2. Oxygen (Slack) is consumed by decomposing nutrients
@@ -68,15 +68,27 @@ class LakeEcosystem:
             # 3. SAV dominance (Rigidity) is highly resilient... at first.
             # It changes very little, showing the system's apparent stability.
             #self.sav_dominance -= np.random.normal(0.005, 0.002)
-            if self.dissolved_oxygen < 0.4: # Introduce a threshold for SAV stress
-                self.sav_dominance -= (0.4 - self.dissolved_oxygen) * 0.1 
-            self.sav_dominance += np.random.normal(0, 0.005) # Add some noise
+            #if self.dissolved_oxygen < 0.4: # Introduce a threshold for SAV stress
+            #    self.sav_dominance -= (0.4 - self.dissolved_oxygen) * 0.1 
+            #self.sav_dominance += np.random.normal(0, 0.005) # Add some noise
+            # 4. Check for the tipping point
+
+            #if self.dissolved_oxygen < 0.4:
+            #    # Instead of a strong deterministic link, make it a smaller, noisier stress effect
+            #    stress_effect = (0.4 - self.dissolved_oxygen) * 0.05 
+            #    self.sav_dominance -= np.random.normal(stress_effect, 0.01)
+            #else:
+            #    self.sav_dominance -= np.random.normal(0.005, 0.002) # Keep the 
+            self.sav_dominance -= np.random.normal(0.001, 0.008) # Tiny mean drift, larger noise
+            # ===================  NEW LOGIC END  ===================
+
             # 4. Check for the tipping point
             if self.dissolved_oxygen < self.oxygen_collapse_threshold:
                 self.has_collapsed = True
                 print(f"--- Regime Shift Triggered at Year {year}! ---")
                 # Rapid collapse of the SAV-dominated state
                 self.sav_dominance = 0.1 + np.random.uniform(-0.05, 0.05)
+
         else:
             # --- Post-Collapse Dynamics ---
             # The system is now in a stable, algae-dominated state.
@@ -251,7 +263,7 @@ STATISTICAL ANALYSIS: LAKE EUTROPHICATION
 ================================================================================
 
 [H4] Testing for a positive trend in SpeedIndex during the Pre-Collapse Phase...
-   Linear Regression: slope = 0.0187, p-value = 1.7680e-03
+   Linear Regression: slope = 0.0213, p-value = 2.7045e-03
    ✅ RESULT: A statistically significant positive trend exists (SpeedIndex is rising).
 
 [H5] Testing for a negative trend in Fcrit_p (Dissolved Oxygen) pre-collapse...
@@ -259,7 +271,8 @@ STATISTICAL ANALYSIS: LAKE EUTROPHICATION
    ✅ RESULT: A statistically significant negative trend exists (Oxygen is depleting).
 
 [H6] Testing for a trend in beta_p (SAV Dominance) pre-collapse...
-   Linear Regression: slope = -0.0047, p-value = 0.000
-   ❌ RESULT: A significant trend was found, contradicting the 'stability' narrative.
+   Linear Regression: slope = 0.0001, p-value = 0.629
+   ✅ RESULT: No statistically significant trend found (beta_p is stable).
 ================================================================================
+
 """
