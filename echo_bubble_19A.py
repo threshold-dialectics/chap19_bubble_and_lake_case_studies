@@ -141,93 +141,130 @@ def calculate_td_diagnostics(df, couple_window=10, smooth_window=7):
     return df.dropna()
 
 def plot_financial_cascade(df):
-    """Generates a 2x2 plot for the full bubble lifecycle."""
+    """
+    Generates a final, PUBLICATION-QUALITY 2x2 plot for the bubble lifecycle,
+    using a unified color scheme and a high-contrast "cased line" for clarity.
+    """
+    # Use the seaborn 'whitegrid' style for consistency with the lake figure
+    sns.set_theme(style="whitegrid", context="talk")
+    
     fig, axes = plt.subplots(2, 2, figsize=(20, 16))
     fig.suptitle('Threshold Dialectics of a Financial "Echo Bubble"', fontsize=28, y=0.98)
-    
-    # --- Define colors for phases ---
-    phase_colors = {
-        'P1_Lull': 'gray', 'P2_Emerge': 'lightblue', 'P3_Inflate': 'lightcoral',
-        'P4_Fragility': 'lightsalmon', 'P5_Correct': 'lightskyblue', 'P6_Reset': 'lightgray'
-    }
 
-    # --- Panel 1: Lever Proxies ---
+    # --- FINAL, REFINED Narrative and Styling Configuration ---
+    # Unified color palette with more distinct colors for each narrative phase
+    NARRATIVE_COLORS = {
+        'Pre-Bubble (P1-P2)': '#B0C4DE',  # Light Steel Blue
+        'Inflation (P3-P4)': '#FF6347',    # Tomato Red (More vibrant)
+        'Correction (P5-P6)': '#87CEEB', # Sky Blue (Distinct from Pre-Bubble)
+    }
+    # Map individual phases to their narrative group color
+    PHASE_TO_NARRATIVE_COLOR = {
+        'P1_Lull': NARRATIVE_COLORS['Pre-Bubble (P1-P2)'],
+        'P2_Emerge': NARRATIVE_COLORS['Pre-Bubble (P1-P2)'],
+        'P3_Inflate': NARRATIVE_COLORS['Inflation (P3-P4)'],
+        'P4_Fragility': NARRATIVE_COLORS['Inflation (P3-P4)'],
+        'P5_Correct': NARRATIVE_COLORS['Correction (P5-P6)'],
+        'P6_Reset': NARRATIVE_COLORS['Correction (P5-P6)'],
+    }
+    LINE_COLORS = {'beta_p': 'blue', 'fcrit_p': 'red', 'strain_p': 'black',
+                   'SpeedIndex': 'darkorange', 'CoupleIndex': 'purple'}
+
+    # --- Identify Key Event Time for Annotation ---
+    correction_start_week = df[df['phase'] == 'P5_Correct'].index.min()
+
+    # --- Time-Series Plots (Panels 1, 2, 3) ---
+    # Panel 1: Lever Proxies
     ax = axes[0, 0]
-    ax.plot(df.index, df['beta_p'], color='blue', lw=3, label=r'$\beta_p$ (Valuation Consensus)')
-    ax.plot(df.index, df['fcrit_p'], color='red', lw=3, label=r'$F_{crit,p}$ (Margin Debt)')
+    ax.plot(df.index, df['beta_p'], color=LINE_COLORS['beta_p'], lw=3, label=r'$\beta_p$ (Valuation Consensus)')
+    ax.plot(df.index, df['fcrit_p'], color=LINE_COLORS['fcrit_p'], lw=3, label=r'$F_{crit,p}$ (Margin Debt)')
+    ax.axvline(correction_start_week, color='black', linestyle='--', lw=2.5, label='Correction Start')
     ax.set_title('Lever Proxies vs. Time', fontsize=18)
     ax.set_ylabel('Normalized Value', fontsize=16)
-    ax.set_ylim(-0.05, 1.05)
-    ax.legend(loc='best', fontsize=14)
-    
-    # --- Panel 2: Systemic Strain ---
+    ax.legend(loc='upper left', fontsize=14)
+
+    # Panel 2: Systemic Strain
     ax = axes[0, 1]
-    ax.plot(df.index, df['strain_p'], color='black', lw=3, label=r'$\langle\Delta_P\rangle_p$ (Price Deviation)')
+    ax.plot(df.index, df['strain_p'], color=LINE_COLORS['strain_p'], lw=3, label=r'$\langle\Delta_P\rangle_p$ (Price Deviation)')
+    ax.axvline(correction_start_week, color='black', linestyle='--', lw=2.5)
     ax.set_title('Systemic Strain Proxy vs. Time', fontsize=18)
-    ax.set_ylabel('Strain Level', fontsize=16)
-    ax.set_ylim(-0.05, 1.05)
-    ax.legend(loc='best', fontsize=14)
-         
-    # --- Panel 3: TD Diagnostics ---
+    ax.legend(loc='upper left', fontsize=14)
+
+    # Panel 3: TD Diagnostics
     ax = axes[1, 0]
-    ax.plot(df.index, df['SpeedIndex'], color='darkorange', lw=3, label='Speed Index')
-    ax.plot(df.index, df['CoupleIndex'], color='purple', lw=3, label='Couple Index')
+    ax.plot(df.index, df['SpeedIndex'], color=LINE_COLORS['SpeedIndex'], lw=3, label='Speed Index')
+    ax.plot(df.index, df['CoupleIndex'], color=LINE_COLORS['CoupleIndex'], lw=3, label='Couple Index')
     ax.axhline(0, color='gray', linestyle=':', lw=2)
+    ax.axvline(correction_start_week, color='black', linestyle='--', lw=2.5)
     ax.set_title('TD Diagnostics vs. Time', fontsize=18)
     ax.set_ylabel('Index Value', fontsize=16)
-    ax.set_ylim(-1.05, 1.05)
     ax.legend(loc='best', fontsize=14)
-    
-    # --- Panel 4: S/C Diagnostic Plane ---
+
+    # --- Panel 4: Trajectory on Diagnostic Plane (FINAL POLISHED VERSION) ---
     ax = axes[1, 1]
     # Risk zones
-    ax.axvspan(0.04, 0.08, color='yellow', alpha=0.3)
-    ax.axvspan(0.08, 0.2, color='red', alpha=0.3)
-    ax.axhspan(0.5, 1.05, color='red', alpha=0.3)
-    
-    # Plot trajectory with color gradient over time
-    points = np.array([df['SpeedIndex'], df['CoupleIndex']]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    norm = plt.Normalize(df.index.min(), df.index.max())
-    lc = plt.cm.plasma(norm(df.index))
-    
-    for i in range(len(df)-1):
-        ax.plot(df['SpeedIndex'][i:i+2], df['CoupleIndex'][i:i+2], color=lc[i], lw=2.5)
+    ax.axvspan(0.06, 0.1, color='yellow', alpha=0.3, zorder=-2)
+    ax.axvspan(0.1, 0.2, color='red', alpha=0.3, zorder=-2)
+    ax.axhspan(0.7, 1.05, color='red', alpha=0.3, zorder=-2)
+    ax.axhspan(-1.05, -0.7, color='red', alpha=0.3, zorder=-2)
+
+    # Plot trajectories with special handling for the Inflation phase
+    for group_name, color in NARRATIVE_COLORS.items():
+        phase_list = [p for p, c in PHASE_TO_NARRATIVE_COLOR.items() if c == color]
+        group_data = df[df['phase'].isin(phase_list)]
+        
+        # --- THIS IS THE KEY IMPROVEMENT ---
+        if group_name == 'Inflation (P3-P4)':
+            # Plot a thicker black line underneath to create a "cased line" effect
+            ax.plot(group_data['SpeedIndex'], group_data['CoupleIndex'],
+                    color='black', lw=5, zorder=3)
+            # Plot the main colored line on top
+            ax.plot(group_data['SpeedIndex'], group_data['CoupleIndex'],
+                    color=color, lw=3, label=group_name, zorder=4)
+        else:
+            # Plot other phases normally
+            ax.plot(group_data['SpeedIndex'], group_data['CoupleIndex'],
+                    color=color, lw=4, label=group_name, zorder=2) # zorder=2 to be behind markers
+            
+    # Add key event markers with enhanced visibility
+    start_point = df.iloc[0]
+    correction_point = df.loc[correction_start_week]
+    ax.scatter(start_point['SpeedIndex'], start_point['CoupleIndex'],
+               marker='o', s=250, color='blue', ec='black', lw=1.5, zorder=5, label='Start')
+    ax.scatter(correction_point['SpeedIndex'], correction_point['CoupleIndex'],
+               marker='X', s=300, color='white', ec='black', lw=1.5, zorder=5, label='Correction Start') # White 'X' for max contrast
 
     ax.set_title('Trajectory on Diagnostic Plane', fontsize=18)
     ax.set_xlabel('Speed Index', fontsize=16)
     ax.set_ylabel('Couple Index', fontsize=16)
     ax.set_xlim(0, 0.15)
     ax.set_ylim(-1.05, 1.05)
+    ax.legend(title="Trajectory & Events", loc='lower right', fontsize=12, title_fontsize=13)
 
-    # Annotate phases on the trajectory plot
-    phase_points = df.groupby('phase').first()
-    for phase, row in phase_points.iterrows():
-        ax.annotate(phase, (row['SpeedIndex'], row['CoupleIndex']),
-                    textcoords="offset points", xytext=(-10, 10), ha='center',
-                    arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
-                    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1, alpha=0.7),
-                    fontsize=12)
-
-    # Add phase backgrounds to time series plots
-    for ax_ts in [axes[0,0], axes[0,1], axes[1,0]]:
-        for phase, color in phase_colors.items():
-            phase_data = df[df['phase'] == phase]
+    # Apply UNIFIED Narrative Phase Backgrounds to all Time-Series Plots
+    for ax_ts in [axes[0, 0], axes[0, 1], axes[1, 0]]:
+        for phase_name, color in PHASE_TO_NARRATIVE_COLOR.items():
+            phase_data = df[df['phase'] == phase_name]
             if not phase_data.empty:
-                ax_ts.axvspan(phase_data.index.min(), phase_data.index.max(), color=color, alpha=0.2, zorder=-1)
+                ax_ts.axvspan(phase_data.index.min(), phase_data.index.max(),
+                              color=color, alpha=0.2, zorder=-1)
 
+    # Final Polish on all Axes
     for ax_row in axes:
         for ax_col in ax_row:
             if ax_col is not axes[1, 1]:
                 ax_col.set_xlabel('Week', fontsize=16)
+                # Remove y-axis labels for strain and index plots for cleaner look if desired
+                # (Optional, but can improve dashboard feel)
+                if ax_col in [axes[0, 1], axes[1, 0]]:
+                    ax_col.set_ylabel('')
             ax_col.tick_params(axis='both', which='major', labelsize=14)
 
-    
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig("financial_bubble_dashboard.png", dpi=300, bbox_inches='tight')
     plt.show()
 
-# --- NEW FUNCTION FOR STATISTICAL ANALYSIS ---
+
 def run_statistical_analysis(df):
     """Runs and prints statistical tests to support the chapter's narrative."""
     print("\n" + "="*80)

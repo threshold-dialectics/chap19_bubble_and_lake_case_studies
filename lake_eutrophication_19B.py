@@ -67,8 +67,10 @@ class LakeEcosystem:
             
             # 3. SAV dominance (Rigidity) is highly resilient... at first.
             # It changes very little, showing the system's apparent stability.
-            self.sav_dominance -= np.random.normal(0.005, 0.002)
-
+            #self.sav_dominance -= np.random.normal(0.005, 0.002)
+            if self.dissolved_oxygen < 0.4: # Introduce a threshold for SAV stress
+                self.sav_dominance -= (0.4 - self.dissolved_oxygen) * 0.1 
+            self.sav_dominance += np.random.normal(0, 0.005) # Add some noise
             # 4. Check for the tipping point
             if self.dissolved_oxygen < self.oxygen_collapse_threshold:
                 self.has_collapsed = True
