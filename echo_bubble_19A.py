@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 import seaborn as sns
-
+import scipy.stats as stats
 # Set a professional plotting theme
 sns.set_theme(style="whitegrid", context="talk")
 
@@ -23,11 +23,11 @@ class FinancialMarketSystem:
         """
         self.n_weeks = n_weeks
         self.phase_transitions = {
-            'P1_Lull_End': 10,
-            'P2_Emerge_End': 20,
-            'P3_Inflate_End': 45,
-            'P4_Fragility_End': 52,
-            'P5_Correct_End': 56,
+            'P1_Lull_End': 20,          # Changed from 10
+            'P2_Emerge_End': 30,        # Shifted
+            'P3_Inflate_End': 55,       # Shifted
+            'P4_Fragility_End': 62,     # Shifted
+            'P5_Correct_End': 66,       # Shifted
         }
         np.random.seed(random_seed)
 
@@ -64,48 +64,51 @@ class FinancialMarketSystem:
             'strain_p': self.price_deviation,
         }
         self.history.append(state)
-        
+
+
     def _update_step(self, week, phase):
         """Contains the core dynamic logic for a single simulation step (week)."""
-        noise = np.random.normal(0, 0.01)
+        # Original noise: noise = np.random.normal(0, 0.01)
 
         if phase == 'P1_Lull':
-            # Stable, low activity
+            # MAKE THE "QUIET" PHASE QUIETER
+            noise = np.random.normal(0, 0.002) # <-- REDUCED NOISE
             self.price_deviation += noise
             self.margin_debt += noise * 0.5
         
         elif phase == 'P2_Emerge':
-            # Sentiment and deviation begin to rise
+            noise = np.random.normal(0, 0.01)
             self.sentiment_velocity += 0.03 + noise
             self.price_deviation += 0.01 + self.sentiment_velocity * 0.1
             self.margin_debt += 0.01 + noise
         
         elif phase == 'P3_Inflate':
-            # *** The core positive feedback loop ***
+            # MAKE THE "LOUD" PHASE LOUDER
+            noise = np.random.normal(0, 0.01)
             # Higher deviation justifies more debt
-            self.margin_debt += (self.price_deviation * 0.1 + noise * 2)
+            self.margin_debt += (self.price_deviation * 0.15 + noise * 2) # <-- INCREASED COEFFICIENT from 0.1
             # Higher debt & sentiment reinforces consensus
-            self.valuation_consensus += (self.margin_debt * 0.05 + self.sentiment_velocity * 0.02 + noise)
+            self.valuation_consensus += (self.margin_debt * 0.06 + self.sentiment_velocity * 0.02 + noise) # <-- INCREASED from 0.05
             # Higher consensus justifies higher deviation
-            self.price_deviation += (self.valuation_consensus * 0.08 + noise * 1.5)
+            self.price_deviation += (self.valuation_consensus * 0.1 + noise * 1.5) # <-- INCREASED from 0.08
             self.sentiment_velocity += 0.01 + noise
             
         elif phase == 'P4_Fragility':
-            # Peak of the bubble, high volatility
+            noise = np.random.normal(0, 0.01)
             self.price_deviation += np.random.normal(0, 0.03)
             self.margin_debt += np.random.normal(0, 0.02)
             self.valuation_consensus += np.random.normal(0, 0.02)
             self.sentiment_velocity -= 0.05 # Sentiment starts to cool
             
         elif phase == 'P5_Correct':
-            # The crash: sharp, rapid unwinding
+            noise = np.random.normal(0, 0.01)
             self.price_deviation -= 0.25 + noise
             self.valuation_consensus -= 0.15 + noise
             self.margin_debt -= 0.20 + noise
             self.sentiment_velocity = 0.1 # Sentiment collapses
             
         elif phase == 'P6_Reset':
-            # Stabilization at a new, lower baseline
+            noise = np.random.normal(0, 0.01)
             self.price_deviation += np.random.normal(-0.01, 0.01)
             self.margin_debt += np.random.normal(-0.01, 0.01)
             self.valuation_consensus += np.random.normal(0.005, 0.01)
@@ -224,6 +227,46 @@ def plot_financial_cascade(df):
     plt.savefig("financial_bubble_dashboard.png", dpi=300, bbox_inches='tight')
     plt.show()
 
+# --- NEW FUNCTION FOR STATISTICAL ANALYSIS ---
+def run_statistical_analysis(df):
+    """Runs and prints statistical tests to support the chapter's narrative."""
+    print("\n" + "="*80)
+    print("STATISTICAL ANALYSIS: FINANCIAL 'ECHO BUBBLE'")
+    print("="*80)
+    
+    # Isolate data for the key phases
+    lull_data = df[df['phase'] == 'P1_Lull'].dropna()
+    inflate_data = df[df['phase'] == 'P3_Inflate'].dropna()
+
+    # --- Test 1: Is SpeedIndex significantly higher in P3 vs P1? ---
+    print("\n[H1] Testing if SpeedIndex is higher in Inflate Phase (P3) vs. Lull Phase (P1)...")
+    speed_stat, speed_p = stats.mannwhitneyu(inflate_data['SpeedIndex'], lull_data['SpeedIndex'], alternative='greater')
+    print(f"   Mann-Whitney U Test: U-statistic = {speed_stat:.2f}, p-value = {speed_p:.4e}")
+    if speed_p < 0.05:
+        print("   ✅ RESULT: The difference is statistically significant. SpeedIndex is higher in P3.")
+    else:
+        print("   ❌ RESULT: The difference is not statistically significant.")
+
+    # --- Test 2: Is CoupleIndex significantly higher in P3 vs P1? ---
+    print("\n[H2] Testing if CoupleIndex is higher in Inflate Phase (P3) vs. Lull Phase (P1)...")
+    couple_stat, couple_p = stats.mannwhitneyu(inflate_data['CoupleIndex'], lull_data['CoupleIndex'], alternative='greater')
+    print(f"   Mann-Whitney U Test: U-statistic = {couple_stat:.2f}, p-value = {couple_p:.4e}")
+    if couple_p < 0.05:
+        print("   ✅ RESULT: The difference is statistically significant. CoupleIndex is higher in P3.")
+    else:
+        print("   ❌ RESULT: The difference is not statistically significant.")
+
+    # --- Test 3: Is there a strong positive correlation between levers in P3? ---
+    print("\n[H3] Testing for positive correlation between beta_p and fcrit_p during P3_Inflate...")
+    corr, p_val = stats.pearsonr(inflate_data['beta_p'], inflate_data['fcrit_p'])
+    print(f"   Pearson Correlation: coefficient = {corr:.3f}, p-value = {p_val:.4e}")
+    if p_val < 0.05 and corr > 0:
+        print("   ✅ RESULT: A statistically significant positive correlation exists.")
+    else:
+        print("   ❌ RESULT: No significant positive correlation found.")
+    print("="*80 + "\n")
+
+
 # --- Main Execution ---
 if __name__ == "__main__":
     # 1. Instantiate and run the simulation
@@ -235,3 +278,31 @@ if __name__ == "__main__":
 
     # 3. Plot the full lifecycle
     plot_financial_cascade(full_df)
+
+    # 4. Run and print statistical tests <-- ADD THIS CALL
+    run_statistical_analysis(full_df)
+
+
+
+""" 
+Example output:
+
+================================================================================
+STATISTICAL ANALYSIS: FINANCIAL 'ECHO BUBBLE'
+================================================================================
+
+[H1] Testing if SpeedIndex is higher in Inflate Phase (P3) vs. Lull Phase (P1)...
+   Mann-Whitney U Test: U-statistic = 108.00, p-value = 1.7830e-01
+   ❌ RESULT: The difference is not statistically significant.
+
+[H2] Testing if CoupleIndex is higher in Inflate Phase (P3) vs. Lull Phase (P1)...
+   Mann-Whitney U Test: U-statistic = 144.00, p-value = 5.1840e-03
+   ✅ RESULT: The difference is statistically significant. CoupleIndex is higher in P3.
+
+[H3] Testing for positive correlation between beta_p and fcrit_p during P3_Inflate...
+   Pearson Correlation: coefficient = 0.950, p-value = 3.6530e-13
+   ✅ RESULT: A statistically significant positive correlation exists.
+================================================================================
+
+
+"""

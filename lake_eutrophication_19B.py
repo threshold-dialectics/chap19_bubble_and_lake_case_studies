@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 import seaborn as sns
-
+import scipy.stats as stats
 # Set a professional plotting theme
 sns.set_theme(style="whitegrid", context="talk")
 
@@ -185,6 +185,45 @@ def plot_eutrophication_cascade(df):
     plt.savefig("lake_eutrophication_dashboard.png", dpi=300, bbox_inches='tight')
     plt.show()
 
+def run_statistical_analysis(df):
+    """Runs and prints statistical tests to support the chapter's narrative."""
+    print("\n" + "="*80)
+    print("STATISTICAL ANALYSIS: LAKE EUTROPHICATION")
+    print("="*80)
+    
+    # Isolate data for the pre-collapse phase
+    pre_collapse_df = df[~df['has_collapsed']].dropna()
+
+    # --- Test 4: Is there a significant positive trend in SpeedIndex pre-collapse? ---
+    print("\n[H4] Testing for a positive trend in SpeedIndex during the Pre-Collapse Phase...")
+    # Using .index for the 'x' variable (time)
+    slope, intercept, r_value, p_value, std_err = stats.linregress(pre_collapse_df.index, pre_collapse_df['SpeedIndex'])
+    print(f"   Linear Regression: slope = {slope:.4f}, p-value = {p_value:.4e}")
+    if p_value < 0.05 and slope > 0:
+        print("   ✅ RESULT: A statistically significant positive trend exists (SpeedIndex is rising).")
+    else:
+        print("   ❌ RESULT: No significant positive trend found.")
+
+    # --- Test 5: Is there a significant negative trend in Fcrit_p (Oxygen) pre-collapse? ---
+    print("\n[H5] Testing for a negative trend in Fcrit_p (Dissolved Oxygen) pre-collapse...")
+    slope, intercept, r_value, p_value, std_err = stats.linregress(pre_collapse_df.index, pre_collapse_df['fcrit_p'])
+    print(f"   Linear Regression: slope = {slope:.4f}, p-value = {p_value:.4e}")
+    if p_value < 0.05 and slope < 0:
+        print("   ✅ RESULT: A statistically significant negative trend exists (Oxygen is depleting).")
+    else:
+        print("   ❌ RESULT: No significant negative trend found.")
+
+    # --- Test 6: Is beta_p (SAV Dominance) stable pre-collapse? ---
+    print("\n[H6] Testing for a trend in beta_p (SAV Dominance) pre-collapse...")
+    slope, intercept, r_value, p_value, std_err = stats.linregress(pre_collapse_df.index, pre_collapse_df['beta_p'])
+    print(f"   Linear Regression: slope = {slope:.4f}, p-value = {p_value:.3f}") # Using .3f for p-value here
+    if p_value >= 0.05:
+        print("   ✅ RESULT: No statistically significant trend found (beta_p is stable).")
+    else:
+        print("   ❌ RESULT: A significant trend was found, contradicting the 'stability' narrative.")
+    print("="*80 + "\n")
+
+
 # --- Main Execution ---
 if __name__ == "__main__":
     # 1. Instantiate and run the simulation
@@ -196,3 +235,29 @@ if __name__ == "__main__":
 
     # 3. Plot the full lifecycle
     plot_eutrophication_cascade(full_df)
+
+    # 4. Run and print statistical tests <-- ADD THIS CALL
+    run_statistical_analysis(full_df)
+
+
+"""Example output:
+
+--- Regime Shift Triggered at Year 26! ---
+
+================================================================================
+STATISTICAL ANALYSIS: LAKE EUTROPHICATION
+================================================================================
+
+[H4] Testing for a positive trend in SpeedIndex during the Pre-Collapse Phase...
+   Linear Regression: slope = 0.0187, p-value = 1.7680e-03
+   ✅ RESULT: A statistically significant positive trend exists (SpeedIndex is rising).
+
+[H5] Testing for a negative trend in Fcrit_p (Dissolved Oxygen) pre-collapse...
+   Linear Regression: slope = -0.0275, p-value = 1.1145e-19
+   ✅ RESULT: A statistically significant negative trend exists (Oxygen is depleting).
+
+[H6] Testing for a trend in beta_p (SAV Dominance) pre-collapse...
+   Linear Regression: slope = -0.0047, p-value = 0.000
+   ❌ RESULT: A significant trend was found, contradicting the 'stability' narrative.
+================================================================================
+"""
