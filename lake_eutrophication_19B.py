@@ -5,8 +5,15 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 import seaborn as sns
 import scipy.stats as stats
-# Set a professional plotting theme
-sns.set_theme(style="whitegrid", context="talk")
+# Set a professional plotting theme with larger text
+plt.rcParams.update({
+    "font.size": 24,
+    "axes.titlesize": 24,
+    "axes.labelsize": 24,
+    "legend.fontsize": 24,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14
+})
 
 class LakeEcosystem:
     """
@@ -140,19 +147,19 @@ def plot_eutrophication_cascade(df):
     ax.plot(df.index, df['beta_p'], color='blue', lw=3, label=r'$\beta_p$ (SAV Dominance)')
     ax.plot(df.index, df['fcrit_p'], color='red', lw=3, label=r'$F_{crit,p}$ (Dissolved Oxygen)')
     ax.axvline(collapse_year, color='black', linestyle='--', lw=2.5, label='Regime Shift')
-    ax.set_title('Lever Proxies vs. Time', fontsize=18)
-    ax.set_ylabel('Normalized Value', fontsize=16)
+    ax.set_title('Lever Proxies vs. Time')
+    ax.set_ylabel('Normalized Value')
     ax.set_ylim(-0.05, 1.05)
-    ax.legend(loc='best', fontsize=14)
+    ax.legend(loc='best')
     
     # --- Panel 2: Systemic Strain ---
     ax = axes[0, 1]
     ax.plot(df.index, df['strain_p'], color='black', lw=3, label=r'$\langle\Delta_P\rangle_p$ (Nutrient Loading)')
     ax.axvline(collapse_year, color='black', linestyle='--', lw=2.5)
-    ax.set_title('Systemic Strain Proxy vs. Time', fontsize=18)
-    ax.set_ylabel('Strain Level', fontsize=16)
+    ax.set_title('Systemic Strain Proxy vs. Time')
+    ax.set_ylabel('Strain Level')
     ax.set_ylim(-0.05, 1.05)
-    ax.legend(loc='best', fontsize=14)
+    ax.legend(loc='best')
          
     # --- Panel 3: TD Diagnostics ---
     ax = axes[1, 0]
@@ -160,10 +167,10 @@ def plot_eutrophication_cascade(df):
     ax.plot(df.index, df['CoupleIndex'], color='purple', lw=3, label='Couple Index')
     ax.axhline(0, color='gray', linestyle=':', lw=2)
     ax.axvline(collapse_year, color='black', linestyle='--', lw=2.5)
-    ax.set_title('TD Diagnostics vs. Time', fontsize=18)
-    ax.set_ylabel('Index Value', fontsize=16)
+    ax.set_title('TD Diagnostics vs. Time')
+    ax.set_ylabel('Index Value')
     ax.set_ylim(-1.05, 1.05)
-    ax.legend(loc='best', fontsize=14)
+    ax.legend(loc='best')
     
     # --- Panel 4: S/C Diagnostic Plane ---
     ax = axes[1, 1]
@@ -182,21 +189,21 @@ def plot_eutrophication_cascade(df):
     ax.scatter(post_collapse_df['SpeedIndex'], post_collapse_df['CoupleIndex'], color='brown', s=100, zorder=4, alpha=0.6, label='Post-Shift State')
     ax.scatter(pre_collapse_df['SpeedIndex'].iloc[-1], pre_collapse_df['CoupleIndex'].iloc[-1], color='red', marker='X', s=250, zorder=5, label='Tipping Point')
 
-    ax.set_title('Trajectory on Diagnostic Plane', fontsize=18)
-    ax.set_xlabel('Speed Index', fontsize=16)
-    ax.set_ylabel('Couple Index', fontsize=16)
+    ax.set_title('Trajectory on Diagnostic Plane')
+    ax.set_xlabel('Speed Index')
+    ax.set_ylabel('Couple Index')
     ax.set_xlim(0, 0.4)
     ax.set_ylim(-1.05, 1.05)
-    ax.legend(loc='best', fontsize=14)
+    ax.legend(loc='best')
 
     for ax_row in axes:
         for ax_col in ax_row:
             if ax_col is not axes[1, 1]:
-                ax_col.set_xlabel('Year', fontsize=16)
-            ax_col.tick_params(axis='both', which='major', labelsize=14)
+                ax_col.set_xlabel('Year')
+            ax_col.tick_params(axis='both', which='major')
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig("lake_eutrophication_dashboard.png", dpi=300, bbox_inches='tight')
+    plt.savefig("lake_eutrophication_dashboard.png", dpi=350, bbox_inches='tight')
     plt.show()
 
 def run_statistical_analysis(df):

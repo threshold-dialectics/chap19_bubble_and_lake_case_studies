@@ -5,8 +5,15 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 import seaborn as sns
 import scipy.stats as stats
-# Set a professional plotting theme
-sns.set_theme(style="whitegrid", context="talk")
+# Set a professional plotting theme with larger text
+plt.rcParams.update({
+    "font.size": 24,
+    "axes.titlesize": 24,
+    "axes.labelsize": 24,
+    "legend.fontsize": 24,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14
+})
 
 class FinancialMarketSystem:
     """
@@ -146,7 +153,6 @@ def plot_financial_cascade(df):
     using a unified color scheme and a high-contrast "cased line" for clarity.
     """
     # Use the seaborn 'whitegrid' style for consistency with the lake figure
-    sns.set_theme(style="whitegrid", context="talk")
     
     fig, axes = plt.subplots(2, 2, figsize=(20, 16))
     fig.suptitle('Threshold Dialectics of a Financial "Echo Bubble"', fontsize=28, y=0.98)
@@ -179,16 +185,16 @@ def plot_financial_cascade(df):
     ax.plot(df.index, df['beta_p'], color=LINE_COLORS['beta_p'], lw=3, label=r'$\beta_p$ (Valuation Consensus)')
     ax.plot(df.index, df['fcrit_p'], color=LINE_COLORS['fcrit_p'], lw=3, label=r'$F_{crit,p}$ (Margin Debt)')
     ax.axvline(correction_start_week, color='black', linestyle='--', lw=2.5, label='Correction Start')
-    ax.set_title('Lever Proxies vs. Time', fontsize=18)
-    ax.set_ylabel('Normalized Value', fontsize=16)
-    ax.legend(loc='upper left', fontsize=14)
+    ax.set_title('Lever Proxies vs. Time')
+    ax.set_ylabel('Normalized Value')
+    ax.legend(loc='upper left')
 
     # Panel 2: Systemic Strain
     ax = axes[0, 1]
     ax.plot(df.index, df['strain_p'], color=LINE_COLORS['strain_p'], lw=3, label=r'$\langle\Delta_P\rangle_p$ (Price Deviation)')
     ax.axvline(correction_start_week, color='black', linestyle='--', lw=2.5)
-    ax.set_title('Systemic Strain Proxy vs. Time', fontsize=18)
-    ax.legend(loc='upper left', fontsize=14)
+    ax.set_title('Systemic Strain Proxy vs. Time')
+    ax.legend(loc='upper left')
 
     # Panel 3: TD Diagnostics
     ax = axes[1, 0]
@@ -196,9 +202,9 @@ def plot_financial_cascade(df):
     ax.plot(df.index, df['CoupleIndex'], color=LINE_COLORS['CoupleIndex'], lw=3, label='Couple Index')
     ax.axhline(0, color='gray', linestyle=':', lw=2)
     ax.axvline(correction_start_week, color='black', linestyle='--', lw=2.5)
-    ax.set_title('TD Diagnostics vs. Time', fontsize=18)
-    ax.set_ylabel('Index Value', fontsize=16)
-    ax.legend(loc='best', fontsize=14)
+    ax.set_title('TD Diagnostics vs. Time')
+    ax.set_ylabel('Index Value')
+    ax.legend(loc='best')
 
     # --- Panel 4: Trajectory on Diagnostic Plane (FINAL POLISHED VERSION) ---
     ax = axes[1, 1]
@@ -234,12 +240,12 @@ def plot_financial_cascade(df):
     ax.scatter(correction_point['SpeedIndex'], correction_point['CoupleIndex'],
                marker='X', s=300, color='white', ec='black', lw=1.5, zorder=5, label='Correction Start') # White 'X' for max contrast
 
-    ax.set_title('Trajectory on Diagnostic Plane', fontsize=18)
-    ax.set_xlabel('Speed Index', fontsize=16)
-    ax.set_ylabel('Couple Index', fontsize=16)
+    ax.set_title('Trajectory on Diagnostic Plane')
+    ax.set_xlabel('Speed Index')
+    ax.set_ylabel('Couple Index')
     ax.set_xlim(0, 0.15)
     ax.set_ylim(-1.05, 1.05)
-    ax.legend(title="Trajectory & Events", loc='lower right', fontsize=12, title_fontsize=13)
+    ax.legend(title="Trajectory & Events", loc='lower right')
 
     # Apply UNIFIED Narrative Phase Backgrounds to all Time-Series Plots
     for ax_ts in [axes[0, 0], axes[0, 1], axes[1, 0]]:
@@ -253,15 +259,15 @@ def plot_financial_cascade(df):
     for ax_row in axes:
         for ax_col in ax_row:
             if ax_col is not axes[1, 1]:
-                ax_col.set_xlabel('Week', fontsize=16)
+                ax_col.set_xlabel('Week')
                 # Remove y-axis labels for strain and index plots for cleaner look if desired
                 # (Optional, but can improve dashboard feel)
                 if ax_col in [axes[0, 1], axes[1, 0]]:
                     ax_col.set_ylabel('')
-            ax_col.tick_params(axis='both', which='major', labelsize=14)
+            ax_col.tick_params(axis='both', which='major', labelsize=12)
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig("financial_bubble_dashboard.png", dpi=300, bbox_inches='tight')
+    plt.savefig("financial_bubble_dashboard.png", dpi=350, bbox_inches='tight')
     plt.show()
 
 
